@@ -1,0 +1,19 @@
+[
+    {
+        "api":"/gittleman/lookup/{ticket}?showEmpty={empty}",
+        "params": [
+            {"ticket": "HADOOP-26828", "empty": "true"},
+            {"ticket": "HADOOP-9544", "empty": "true"},
+            {"ticket": "HADOOP-7765", "empty": "false"},
+            {"ticket": "HIVE-4019", "empty": "false"},
+            {"ticket": "HIVE-4167", "empty": "true"}
+        ]
+    },
+    {
+        "api":"/gittleman/allInterestedBranches/{component}",
+        "params": [
+            {"component": "hive"},
+            {"component": "hbase"}
+        ]
+    }
+]
