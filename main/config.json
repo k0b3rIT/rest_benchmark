@@ -6,7 +6,60 @@
             {"ticket": "HADOOP-9544", "empty": "true"},
             {"ticket": "HADOOP-7765", "empty": "false"},
             {"ticket": "HIVE-4019", "empty": "false"},
-            {"ticket": "HIVE-4167", "empty": "true"}
+            {"ticket": "HIVE-4167", "empty": "true"},
+            {"ticket": "HIVE-3400", "empty": "true"},
+            {"ticket": "HIVE-3839", "empty": "true"},
+            {"ticket": "HIVE-3937", "empty": "true"},
+            {"ticket": "HIVE-4258", "empty": "true"},
+            {"ticket": "HIVE-3985", "empty": "true"},
+            {"ticket": "HIVE-3861", "empty": "true"},
+            {"ticket": "HADOOP-5227", "empty": "true"},
+            {"ticket": "HADOOP-9095", "empty": "true"},
+            {"ticket": "HADOOP-9095", "empty": "true"},
+            {"ticket": "HADOOP-9095", "empty": "true"},
+            {"ticket": "HADOOP-9095", "empty": "true"},
+            {"ticket": "HADOOP-9095", "empty": "true"}
+        ]
+    },
+    {
+        "api":"/gittleman/branches/{componentName}",
+        "params": [
+            {"componentName": "hive"},
+            {"componentName": "hbase"}
+        ]
+    },
+    {
+        "api":"/gittleman/aliases/{ticket}",
+        "params": [
+            {"ticket": "HIVE-3400"},
+            {"ticket": "HIVE-3985"},
+            {"ticket": "HIVE-4019"},
+            {"ticket": "HADOOP-9095"}
+        ]
+    },
+    {
+        "api":"/gittleman/tickets/{componentName}",
+        "params": [
+            {"componentName": "hive"},
+            {"componentName": "hbase"}
+        ]
+    },
+    {
+        "api":"/gittleman/lookup/commithash/{commithash}",
+        "params": [
+            {"commithash": "bff88986bec39ebbb62b51526dc63f81697d19b3"},
+            {"commithash": "e20e5b06e3d8184376ab7a53835f3405433e9ee9"},
+            {"commithash": "7470d9edbb0a45e714c96b5d55eff30724c0653a"},
+            {"commithash": "c255a4fa8f7b8de2c206ff2d2f5daa7b3ee240bb"}
+        ]
+    },
+    {
+        "api":"/gittleman/search/{componentName}/{ticketId}",
+        "params": [
+            {"componentName": "hive", "ticketId": "HIVE-3400"},
+            {"componentName": "hadoop", "ticketId": "HBASE-00000"},
+            {"componentName": "hadoop", "ticketId": "HADOOP-9544"},
+            {"componentName": "hive", "ticketId": "HIVE-3839"}
         ]
     },
     {

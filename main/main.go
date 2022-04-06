@@ -1,29 +1,29 @@
 package main
 
 import (
-	"net/http"
-	"fmt"
-	"github.com/bradhe/stopwatch"
-	"io/ioutil"
 	"encoding/json"
+	"flag"
+	"fmt"
+	"io/ioutil"
+	"net/http"
 	"strings"
- )
- import "flag"
 
+	"github.com/bradhe/stopwatch"
+)
 
-var Reset  = "\033[0m"
-var Red    = "\033[31m"
-var Green  = "\033[32m"
+var Reset = "\033[0m"
+var Red = "\033[31m"
+var Green = "\033[32m"
 var Yellow = "\033[33m"
-var Blue   = "\033[34m"
+var Blue = "\033[34m"
 var Purple = "\033[35m"
-var Cyan   = "\033[36m"
-var Gray   = "\033[37m"
-var White  = "\033[97m"
+var Cyan = "\033[36m"
+var Gray = "\033[37m"
+var White = "\033[97m"
 
 type ApiTest struct {
-    Api string
-    Params []map[string]string
+	Api    string
+	Params []map[string]string
 }
 
 func main() {
@@ -36,55 +36,55 @@ func main() {
 	baseUrl := *baseUrlPtr
 	configFilePath := *configPtr
 
-	if (baseUrl == "") {
+	if baseUrl == "" {
 		panic("you have to define the host")
 	}
 
-	if (configFilePath == "") {
+	if configFilePath == "" {
 		panic("you have to define the config file")
 	}
 
 	configStr, err := ioutil.ReadFile(configFilePath)
-    if err != nil {
-        fmt.Print(err)
-    }
+	if err != nil {
+		fmt.Print(err)
+	}
 
 	var apiTests []ApiTest
 
 	err = json.Unmarshal([]byte(configStr), &apiTests)
 
-	if (err != nil) {
-		panic(fmt.Sprint("Unable to parse config file, %v", err));
+	if err != nil {
+		panic(fmt.Sprint("Unable to parse config file, %v", err))
 	}
 
 	fmt.Printf("Start banchmark on %s\n", baseUrl)
 
 	totalWatch := stopwatch.Start()
-	
+
 	for _, apiTest := range apiTests {
 		executeApiTest(baseUrl, apiTest.Api, apiTest.Params)
 	}
 
 	totalWatch.Stop()
-		fmt.Printf(inRed("Total: %v\n"), totalWatch.String())
+	fmt.Printf(inRed("Total: %v\n"), totalWatch.String())
 }
 
 func executeApiTest(baseUrl string, api string, params []map[string]string) {
-
 
 	for _, param := range params {
 		apiWithParams := substituteParams(api, param)
 
 		watch := stopwatch.Start()
 		requestUrl := fmt.Sprintf("%s%s", baseUrl, apiWithParams)
-		fmt.Printf("%s", requestUrl)
+		fmt.Printf("%s", apiWithParams)
 		_, err := http.Get(requestUrl)
-		if (err != nil) {
+		if err != nil {
 			panic(fmt.Sprint("Failed to send request to [%s]", requestUrl))
 		}
 
 		watch.Stop()
-		fmt.Printf("\t%v\n", watch.String())
+		dur := watch.Milliseconds() * 1000 * 1000
+		fmt.Printf("\t%v\n", dur.Milliseconds())
 	}
 
 }
@@ -94,9 +94,8 @@ func substituteParams(api string, params map[string]string) string {
 	for k, v := range params {
 		afterReplace = strings.Replace(afterReplace, "{"+k+"}", v, 1)
 	}
-	return afterReplace;
+	return afterReplace
 }
-
 
 func inRed(str string) string {
 	return Red + str + Reset
