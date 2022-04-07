@@ -8,6 +8,8 @@ import (
 	"net/http"
 	"strings"
 
+	driver "github.com/arangodb/go-driver"
+	arangohttp "github.com/arangodb/go-driver/http"
 	"github.com/bradhe/stopwatch"
 )
 
@@ -27,6 +29,46 @@ type ApiTest struct {
 }
 
 func main() {
+
+	conn, err := arangohttp.NewConnection(arangohttp.ConnectionConfig{
+		Endpoints: []string{"http://10.125.29.146:8540"},
+	})
+
+	if err != nil {
+		panic("Http connection failed")
+	}
+
+	client, err := driver.NewClient(driver.ClientConfig{
+		Connection:     conn,
+		Authentication: driver.BasicAuthentication("root", "ohve7uthePhi"),
+	})
+
+	if err != nil {
+		panic("Client open failed")
+	}
+
+	db, err := client.Database(nil, "githist_iop")
+	if err != nil {
+		panic("DB open failed")
+	}
+
+	var cursor driver.Cursor
+
+	querystring := "FOR commit_obj in 1..10000000 ANY 'issue/HIVE-4019' ANY issueAlias, INBOUND autoAlias, INBOUND commitIssue OPTIONS {uniqueVertices: \"global\", bfs:true} FILTER IS_SAME_COLLECTION(commit, commit_obj) let branches = UNIQUE(FOR v in 1..10000000 ANY commit_obj INBOUND parentCommit, INBOUND branchHead OPTIONS {uniqueVertices: \"global\", bfs:true} FILTER IS_SAME_COLLECTION(branch, v) RETURN {name:v.branchName, remote:v.remoteURI}) RETURN { hash:commit_obj.hash, message:commit_obj.message, componentName:commit_obj.componentName, tickets:commit_obj.tickets, commitTime: commit_obj.commitTime, isRevert: commit_obj.isRevert, branches: branches }"
+
+	watch := stopwatch.Start()
+	cursor, err = db.Query(nil, querystring, nil)
+	watch.Stop()
+	fmt.Printf(inRed("Total: %v\n"), watch.String())
+
+	if err != nil {
+		fmt.Println("Failed query")
+		fmt.Println(err)
+	}
+
+	defer cursor.Close()
+
+	panic("DONE")
 
 	baseUrlPtr := flag.String("host", "", "host te execute the query against")
 	configPtr := flag.String("config", "", "config file path")
