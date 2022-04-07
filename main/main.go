@@ -8,8 +8,6 @@ import (
 	"net/http"
 	"strings"
 
-	driver "github.com/arangodb/go-driver"
-	arangohttp "github.com/arangodb/go-driver/http"
 	"github.com/bradhe/stopwatch"
 )
 
@@ -28,55 +26,22 @@ type ApiTest struct {
 	Params []map[string]string
 }
 
+type ArangoTest struct {
+	Query  string
+	Params []map[string]string
+}
+
 func main() {
-
-	conn, err := arangohttp.NewConnection(arangohttp.ConnectionConfig{
-		Endpoints: []string{"http://10.125.29.146:8540"},
-	})
-
-	if err != nil {
-		panic("Http connection failed")
-	}
-
-	client, err := driver.NewClient(driver.ClientConfig{
-		Connection:     conn,
-		Authentication: driver.BasicAuthentication("root", "ohve7uthePhi"),
-	})
-
-	if err != nil {
-		panic("Client open failed")
-	}
-
-	db, err := client.Database(nil, "githist_iop")
-	if err != nil {
-		panic("DB open failed")
-	}
-
-	var cursor driver.Cursor
-
-	querystring := "FOR commit_obj in 1..10000000 ANY 'issue/HIVE-4019' ANY issueAlias, INBOUND autoAlias, INBOUND commitIssue OPTIONS {uniqueVertices: \"global\", bfs:true} FILTER IS_SAME_COLLECTION(commit, commit_obj) let branches = UNIQUE(FOR v in 1..10000000 ANY commit_obj INBOUND parentCommit, INBOUND branchHead OPTIONS {uniqueVertices: \"global\", bfs:true} FILTER IS_SAME_COLLECTION(branch, v) RETURN {name:v.branchName, remote:v.remoteURI}) RETURN { hash:commit_obj.hash, message:commit_obj.message, componentName:commit_obj.componentName, tickets:commit_obj.tickets, commitTime: commit_obj.commitTime, isRevert: commit_obj.isRevert, branches: branches }"
-
-	watch := stopwatch.Start()
-	cursor, err = db.Query(nil, querystring, nil)
-	watch.Stop()
-	fmt.Printf(inRed("Total: %v\n"), watch.String())
-
-	if err != nil {
-		fmt.Println("Failed query")
-		fmt.Println(err)
-	}
-
-	defer cursor.Close()
-
-	panic("DONE")
 
 	baseUrlPtr := flag.String("host", "", "host te execute the query against")
 	configPtr := flag.String("config", "", "config file path")
+	benchmarkTypePtr := flag.String("type", "", "benchmark type")
 
 	flag.Parse()
 
 	baseUrl := *baseUrlPtr
 	configFilePath := *configPtr
+	benchmarkType := *benchmarkTypePtr
 
 	if baseUrl == "" {
 		panic("you have to define the host")
@@ -86,6 +51,64 @@ func main() {
 		panic("you have to define the config file")
 	}
 
+	if benchmarkType != "api" && benchmarkType != "arango" {
+		panic("invalid type")
+	}
+
+	if benchmarkType == "api" {
+		apiBenchmark(baseUrl, configFilePath)
+	}
+
+	if benchmarkType == "arango" {
+		arangoBenchmark(baseUrl, configFilePath)
+	}
+
+}
+
+func arangoBenchmark(baseUrl string, configFilePath string) {
+	connector, err := NewArangoDbConnector(baseUrl, "root", "ohve7uthePhi", "githist_iop")
+	if err != nil {
+		panic(err)
+	}
+
+	configStr, err := ioutil.ReadFile(configFilePath)
+	if err != nil {
+		fmt.Print(err)
+	}
+
+	var arangoTests []ArangoTest
+
+	err = json.Unmarshal([]byte(configStr), &arangoTests)
+
+	if err != nil {
+		panic(fmt.Sprint("Unable to parse config file ", err))
+	}
+
+	for _, arangoTest := range arangoTests {
+		executeArangoTest(connector, arangoTest.Query, arangoTest.Params)
+	}
+}
+
+func executeArangoTest(connector *ArangoConnector, querystring string, params []map[string]string) {
+
+	for _, param := range params {
+		queryWithParams := substituteParams(querystring, param, "@", "")
+		watch := stopwatch.Start()
+		fmt.Printf("%s", queryWithParams)
+
+		_, err := connector.ExecuteQuery(queryWithParams)
+		if err != nil {
+			panic(err)
+		}
+
+		watch.Stop()
+
+		dur := watch.Milliseconds() * 1000 * 1000
+		fmt.Printf("\t%v\n", dur.Milliseconds())
+	}
+}
+
+func apiBenchmark(baseUrl string, configFilePath string) {
 	configStr, err := ioutil.ReadFile(configFilePath)
 	if err != nil {
 		fmt.Print(err)
@@ -114,7 +137,7 @@ func main() {
 func executeApiTest(baseUrl string, api string, params []map[string]string) {
 
 	for _, param := range params {
-		apiWithParams := substituteParams(api, param)
+		apiWithParams := substituteParams(api, param, "{", "}")
 
 		watch := stopwatch.Start()
 		requestUrl := fmt.Sprintf("%s%s", baseUrl, apiWithParams)
@@ -131,10 +154,10 @@ func executeApiTest(baseUrl string, api string, params []map[string]string) {
 
 }
 
-func substituteParams(api string, params map[string]string) string {
+func substituteParams(api string, params map[string]string, paramPrefix string, paramPostfix string) string {
 	afterReplace := api
 	for k, v := range params {
-		afterReplace = strings.Replace(afterReplace, "{"+k+"}", v, 1)
+		afterReplace = strings.Replace(afterReplace, paramPrefix+k+paramPostfix, v, -1)
 	}
 	return afterReplace
 }

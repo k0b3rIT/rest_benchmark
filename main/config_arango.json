@@ -1,0 +1,15 @@
+[
+    {
+        "query":"FOR commit_obj in 1..@MAX ANY '@issue' ANY issueAlias, INBOUND autoAlias, INBOUND commitIssue OPTIONS {uniqueVertices: \"global\", bfs:true} FILTER IS_SAME_COLLECTION(commit, commit_obj) let branches = UNIQUE(FOR v in 1..@MAX ANY commit_obj INBOUND parentCommit, INBOUND branchHead OPTIONS {uniqueVertices: \"global\", bfs:true} FILTER IS_SAME_COLLECTION(branch, v) RETURN v) RETURN { hash:commit_obj.hash, message:commit_obj.message, componentName:commit_obj.componentName, tickets:commit_obj.tickets, commitTime: commit_obj.commitTime, isRevert: commit_obj.isRevert, branches: branches }",
+        "params": [
+            {"MAX": "10000000", "issue": "issue/HIVE-4019"},
+            {"MAX": "10000000", "issue": "issue/HIVE-4019"},
+            {"MAX": "10000000", "issue": "issue/HIVE-4019"},
+            {"MAX": "10000000", "issue": "issue/HIVE-4019"},
+            {"MAX": "10000000", "issue": "issue/HIVE-4019"},
+            {"MAX": "10000000", "issue": "issue/HIVE-4019"},
+            {"MAX": "10000000", "issue": "issue/HIVE-4019"},
+            {"MAX": "10000000", "issue": "issue/HIVE-4019"}
+        ]
+    }
+]
